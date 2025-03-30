@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  redis:
+    restart: always
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - db-net
+
+  db:
+    restart: always
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=bug
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - db-net
+
+  project:
+    restart: always
+    container_name: code
+    command: >
+      bash -c "until nc -z db 5432; do sleep 1; done &&
+               python manage.py migrate &&
+               python manage.py runserver 0.0.0.0:8000"
+    env_file:
+      - ./Backend/backend/settings.ini 
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    working_dir: /app/backend
+    volumes:
+      - ./Backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - db-net
+
+  frontend:
+    restart: always
+    command: npm start
+    container_name: front
+    build:
+      context: ./frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    depends_on:
+      - project
+    networks:
+      - db-net
+
+networks:
+  db-net:
+    driver: bridge
