@@ -5,7 +5,7 @@ services:
     restart: always
     image: redis:latest
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - db-net
 
@@ -20,6 +20,7 @@ services:
       - "5432:5432"
     networks:
       - db-net
+    
 
   project:
     restart: always
@@ -49,7 +50,7 @@ services:
     command: npm start
     container_name: front
     build:
-      context: ./frontend/
+      context: ./Frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
